@@ -1,0 +1,102 @@
+Step 1:
+Dictionary File
+SNMP can provide us with a wealth of information about a target. To get this information, we will need to first discover the community strings used by our target devices. We can do this in a brute force or dictionary attack manner.
+
+For this exercise we’ll be using a tool written in C named onesixtyone. To run it, we will need to specify a target (which will be our own machine) and a dictionary file. Your VM has several dictionary files, or wordlists. Let's take a look at one of them. Issue the following command:
+
+cat /usr/share/wordlists/dirb/small.txt
+
+Step 2:
+Cracking SNMP Community String
+We will simply use the dictionary file with onesixtyone to check to see if we can find the correct community string for our machine. It should be understood that your first attempt might fail in the real world, which would mean you need a better dictionary, or you have to resort to brute forcing. Enter the following command to use onesixtyone with the small.txt dictionary (enter your own IP address, run the ip a command if you don't know what it is):
+
+onesixtyone 10.0.x.y -c /usr/share/wordlists/dirb/small.txt
+
+
+Step 3:
+Walking SNMP
+Now that we have cracked some community strings, we can now use one of them to enumerate information about the target devices. For this task we’ll be using snmpwalk. The syntax and usage for snmpwalk is quite robust. We will just do the basics. Let’s tell snmpwalk to enumerate everything that it can about our machine, using the community string we discovered using onesixtyone. We do have to account for the version. We'll specify version 2c, which, if that's what used on the system, will pull both 32-bit and 64-bit counters. If we run snmpwalk without specifying any OIDs (Object Identifier), we would see way more information scroll past than you are able to process in your head! This is because we are saying "get everything." Remember that we can always write output to a file or use* more* to make the results easier to examine.
+
+Enter this command, using your own IP address (be sure to replace the "xxxxx" with the community string we cracked in the pervious step):
+
+snmpwalk -v 2c -c xxxxxx 10.0.x.y | more
+
+
+Hit Enter or Space a few times to see just how much information we can get by walking SNMP. Hit **Q **or Ctrl+C to return to the command prompt. In the following steps we will learn how to look up specific system information via SNMP.
+
+Step 4:
+Listing Running Processes - Numeric OIDs
+To get a list of running processes on a Windows target, we can just grep the output for 'exe'. On a Linux target, we need to use a specific OID (Object Identifier) for this. Some systems may have the MIB (management information base) resolution enabled, which resolves numeric OIDs to text-based names. But since we don't know yet whether this is an option, we will use a numeric OID to list all running processes. Enter the following command (using your own IP address).
+
+snmpwalk -v 2c -c secret 10.0.x.y 1.3.6.1.2.1.25.4.2.1.2
+
+Nice! Not only did we get the list of running processes, but we can see that MIB resolution is enabled on the target system, so we can use it going forward.
+
+Feel free to experiment with various OIDs throughout this lab, just make sure you enter the suggested values to move on to the next steps.
+
+Step 5:
+Listing Running Processes - MIB Resolutions
+Now let's try getting the same information, this time using the text-based MIB name instead of a numeric OID. Run the following command (again, use your own IP address as the target):
+
+snmpwalk -v 2c -c secret 10.0.x.y hrSWRunName
+
+
+You should see the same results as in the previous step.
+
+
+
+The last (numeric) part of the resolved OID is the PID of the process. If we wanted to get the PID of a specific process, we can add grep to our command. We will do that in the next step.
+
+
+Step 6:
+Looking for Specific Processes
+It could be useful for us to find a process running with root privileges. Typically, sshd is one of the processes always running as root. Let's issue our command again, this time grepping for 'sshd':
+
+snmpwalk -v 2c -c secret 10.0.x.y hrSWRunName | grep sshd
+You may get more than one process for sshd.
+
+Step 7:
+Gathering System Information - System Description
+Let's see what other information we can get from our target via SNMP. It would be good to actually know what type of system we are dealing with. We can get system description by looking for the OID 1.3.6.1.2.1.1.1 or the resolved MIB name sysDescr. Try either (or both) as follows (using your own IP address):
+
+snmpwalk -v 2c -c secret 10.0.x.y 1.3.6.1.2.1.1.1
+or
+
+snmpwalk -v 2c -c secret 10.0.x.y sysDescr
+Results should be the same.
+
+
+Step 8:
+Gathering System Information - Hostname
+Getting hostname is just as easy: all we need to do is look for OID 1.3.6.1.2.1.1.5. Or* sysName*, if resolving is enabled. Try those on your own IP as follows:
+
+snmpwalk -v 2c -c secret 10.0.x.y 1.3.6.1.2.1.1.5
+or
+
+snmpwalk -v 2c -c secret 10.0.0.x sysName
+
+Step 9:
+Gathering System Information - Free RAM
+Next, let's pull some memory-related information about our system. If we want to see the amount of free RAM, we will look for OID 1.3.6.1.4.1.2021.4.11.0 or the MIB name memTotalFree:
+
+snmpwalk -v 2c -c secret 10.0.x.y 1.3.6.1.4.1.2021.4.11.0
+or
+
+snmpwalk -v 2c -c secret 10.0.x.y memTotalFree
+
+
+Notice that this time, if you run both commands, or even the same command several times, the results will be different, because we are dealing with dynamic information.
+
+
+Step 10:
+Network Information
+As you can see, SNMP provide a wealth of information. Make sure to invest some time in researching available OIDs and their meaning. As the last step in this lab, we will retrieve some network information related to our target. If we wanted to get physical addresses of NICs, we would issue one of the following commands:
+
+snmpwalk -v 2c -c secret 10.0.x.y 1.3.6.1.2.1.2.2.1.6
+or
+
+snmpwalk -v 2c -c secret 10.0.x.y ifPhysAddress
+
+
+Go ahead and try more OIDs to see what other information you can gather via SNMP (can you find listening UDP ports?), before moving on to the next lab.
+
