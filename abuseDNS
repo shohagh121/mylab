@@ -35,3 +35,33 @@ In most cases, when used against real networks, dnsrecon will produce a lot of o
 Let's run dnsrecon again, but this time looking specifically for payroll servers:
 
 dnsrecon -n skillsetlocal.com -r 192.168.1.1-192.168.1.254 | grep payroll
+
+So far we've been practicing gathering various types of information contained in DNS records. In the next two steps, we will see how DNS can be used in attacks as well. We will use a Python-based tool DNSChef. It is a highly configurable DNS proxy, which allows intercepting and redirecting DNS queries. In a real penetration test, you would need to either manually configure or poison DNS server entry to point to DNSChef.
+
+The use of DNS Proxy is recommended in situations where it is not possible to force an application to use some other proxy server directly. For example, some mobile applications completely ignore OS HTTP Proxy settings. In these cases, the use of a DNS proxy server such as DNSChef will allow you to trick that application into forwarding connections to the desired destination. Source: http://thesprawl.org/projects/dnschef/
+
+Without any parameters specified, DNSChef will run in "full proxy" mode, forwarding all requests to an upstream DNS server (8.8.8.8 by default) and returning them back to the querying host. This is useful if we wanted to capture and examine DNS query packets. However, we can also use DNSChef to actually send intercepted queries to a specified IP. We will need to specify an interface for DNSChef that is different from our 127.0.0.1 nameserver IP. The following command will send all DNS queries for google.com to 1.2.3.4:
+
+sudo dnschef --interface=127.0.0.2 --fakeip=1.2.3.4 --fakedomains=google.com
+
+
+Step 7:
+Open another console windows
+
+Step 8:
+DNSChef is Cooking
+Let's run the dig command on google.com using our DNSChef proxy IP address as the nameserver. Enter the following command:
+
+dig @127.0.0.2 google.com
+You can see that the A record for google.com is pointing to 1.2.3.4.
+
+Step 9: Go back to console 1 and check the output
+
+Step 10:
+Examining DNSChef Output
+You will see that DNSChef had captured the query for google.com and cooked up a response with the fake IP that we specified.
+
+
+https://www.geeksforgeeks.org/dig-command-in-linux-with-examples/
+
+
