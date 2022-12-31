@@ -1,0 +1,37 @@
+Step 1:
+Finding Name Servers
+In the first portion of this lab we will use some popular tools to see how basic DNS queries work. We’ll be looking at the different record types and how to pull them from a DNS server.
+
+When you look up websites like google.com, your computer sends a DNS request to some DNS server somewhere and asks for the IP address of google.com. In a real enterprise, this DNS server might contain thousands of records that represent each device on the corporate network. Let’s look at some ways to pull the most useful DNS record types on real examples.
+
+When querying servers for real organizations, such as Yahoo or Facebook, we would first have to try and find which DNS servers on the internet we need to query. To do this we can use dig. Let's perform this on our server. On your terminal enter the following:
+
+dig @127.0.0.1 skillsetlocal.com ns
+
+Step 2:
+Finding Mail Servers
+We will now try to query our DNS server for MX records related to the skillsetlocal.com domain. Enter the following command to do that:
+
+dig @127.0.0.1 skillsetlocal.com mx
+
+Step 3:
+DNS Zone Transfer
+So far we have been pulling specific types of records from our DNS server. What if we wanted to pull all records? For this, we can attempt the AXFR query (also known as DNS zone transfer). AXFR is used to replicate DNS databases, and a successful query can provide us with lots of useful information about the target network. We can use dig for AXFR queries as well. Issue the following command to pull all DNS records from our server:
+
+dig @127.0.0.1 skillsetlocal.com axfr
+
+Step 4:
+Reverse Lookups
+Everything we have done so far depends on getting data from the DNS servers’ forward lookup records. In other words, these DNS files allow us to look up a host by name, such as www.yahoo.com. Essentially, www is a host on the yahoo.com domain. Sometimes DNS servers also store reverse lookup records. With reverse lookup records we can do the opposite, which tells us which hosts are associated with a given IP address.
+
+The tool we’ll be using to do reverse lookups is named DNSrecon. Let's run it on the class C network using the IP addresses we discovered in the previous step with our DNS zone transfer. The -n option specifies the name (domain) server, and -r stands for "range".
+
+dnsrecon -n skillsetlocal.com -r 192.168.1.1-192.168.1.254
+
+Step 5:
+Grepping DNSrecon Output
+In most cases, when used against real networks, dnsrecon will produce a lot of output. Trying to process a lot of data as it comes is difficult. To make this task easier, we can write output to a file or combine dnsrecon commands with our good friends more and grep.
+
+Let's run dnsrecon again, but this time looking specifically for payroll servers:
+
+dnsrecon -n skillsetlocal.com -r 192.168.1.1-192.168.1.254 | grep payroll
